@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contrôle du tonneau</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/bootstrap-toggle.min.css">
+    <link rel="stylesheet" href="css/drum.min.css">
+    <style>
+        .well {
+            background-color: #405968;
+        }
+
+        .graphColorLabel {
+            width: 10px;
+            height: 40px;
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0px 20px;
+        }
+
+        .graphTextLabel {
+            display: inline-block;
+            min-width: 100px;
+            vertical-align: middle;
+            font-size: 2.6em;
+        }
+
+
+        div.drum-wrapper .dial {
+            height: 10px;
+        }
+
+        #drum_CheckSelect1 .drum_container, #drum_CheckSelect1 figure,
+        #drum_CheckSelect2 .drum_container, #drum_CheckSelect2 figure,
+        #drum_CheckSelect3 .drum_container, #drum_CheckSelect3 figure,
+        #drum_GrantSelect1 .drum_container, #drum_GrantSelect1 figure,
+        #drum_GrantSelect2 .drum_container, #drum_GrantSelect2 figure,
+        #drum_GrantSelect3 .drum_container, #drum_GrantSelect3 figure {
+            height: 40px;
+        }
+
+        #drum_CheckSelect1 figure,
+        #drum_CheckSelect2 figure,
+        #drum_CheckSelect3 figure,
+        #drum_GrantSelect1 figure,
+        #drum_GrantSelect2 figure,
+        #drum_GrantSelect3 figure {
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 2em;
+            line-height: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="MainContainer">
+        <div class="jumbotron">
+            <div class="row">
+                <div class="col-md-6 text-center">
+                    <h2>Contrôle du tonneau</h2>
+                </div>
+                <div class="col-md-5 col-md-offset-1">
+                    <div id="PrivilegeIsTaken" class="row" style="display:none;">
+                        <div class="col-xs-8">
+                            <div class="well well-sm">
+                                <div>
+                                    <span>Pseudo : </span>
+                                    <span id="PrivilegePseudo"></span>
+                                </div>
+                                <div>
+                                    <span>Heure de fin : </span>
+                                    <span id="PrivilegeDateTimeout"></span>
+                                </div>
+                                <div id="PrivilegeCode">
+                                    <span>Code : </span>
+                                    <span id="PrivilegeCodeValue"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div id="PrivilegeIsLock">
+                                <a href="#" data-toggle="modal" data-target="#CheckPrivilegeModal">
+                                    <img class="img-responsive" src="asset/blocked.png" />
+                                </a>
+                            </div>
+                            <div id="PrivilegeIsMine" style="display:none;">
+                                <a href="#" id="PrivilegeRelease">
+                                    <img class="img-responsive" src="asset/unlocked.png" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="PrivilegeIsFree" class="row" style="display:none;">
+                        <div class="col-xs-4 col-xs-offset-4">
+                            <a href="#" data-toggle="modal" data-target="#GrantPrivilegeModal">
+                                <img class="img-responsive" src="asset/doorknob.png" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="panel panel-danger">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-xs-4 col-md-4">
+                                <img class="img-responsive" style="margin-top:20px;" src="asset/thermometer.png" />
+                            </div>
+                            <div class="col-xs-8 col-md-8">
+                                <div class="well well-sm text-center">
+                                    <img height="70" src="asset/sea.png" />
+                                    <div class="graphColorLabel" style="background-color: rgb(0,0,255);"></div>
+                                    <span class="graphTextLabel" id="TemperatureEau">??&nbsp;°C</span>
+                                </div>
+                                <div class="well well-sm text-center">
+                                    <img height="70" src="asset/wind.png" />
+                                    <div class="graphColorLabel" style="background-color: rgb(0,255,0);"></div>
+                                    <span class="graphTextLabel" id="TemperatureAir">??&nbsp;°C</span>
+                                </div>
+                            </div>
+
+                        </div>
+                        <canvas id="graphTemperatures"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6" id="ControlPanel">
+                <div class="panel panel-primary">
+                    <div class="panel-body">
+                        <fieldset id="ControlPanelFieldset">
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <img class="img-responsive" style="margin-top:10px;" src="asset/light-bulb-on.png" />
+                                </div>
+                                <div class="col-xs-8">
+                                    <div class="well well-sm">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input id="SwitchLedSol" data-toggle="toggle" type="checkbox" data-size="large" data-onstyle="success" data-offstyle="danger"> Led sol
+                                            </label>
+                                        </div>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input id="SwitchProjecteur" data-toggle="toggle" type="checkbox" data-size="large" data-onstyle="success" data-offstyle="danger"> Projecteur
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <img class="img-responsive" style="margin-top:10px;" src="asset/pump.png" />
+                                </div>
+                                <div class="col-xs-8">
+                                    <div class="well well-sm">
+                                        <a class="pull-right" href="#" data-toggle="modal" data-target="#PompeConfigModal"><span class="glyphicon glyphicon-cog"></span></a>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input id="SwitchPompeMode" data-toggle="toggle" type="checkbox" data-size="large" data-on="automatique" data-off="manuel"> Mode
+                                            </label>
+                                        </div>
+                                        <fieldset id="SwitchPompeManuelFieldset">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input id="SwitchPompeManuel" data-toggle="toggle" type="checkbox" data-size="large" data-on="marche" data-off="arret" data-onstyle="success" data-offstyle="danger"> Manuel
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="PompeConfigModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Configuration de la pompe</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="InputPompeTempsActivation">Temps d'activation </label>
+                        <div class="input-group">
+                            <input id="InputPompeTempsActivation" class="form-control" type="number" min="0" step="1" value="5" />
+                            <div class="input-group-addon"> minutes</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="InputPompeTempsCycle">Temps de cycle </label>
+                        <div class="input-group">
+                            <input id="InputPompeTempsCycle" class="form-control" type="number" min="0" step="1" value="15" />
+                            <div class="input-group-addon"> minutes</div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" data-backdrop="false" id="ErrorModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Erreur</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Essayez de recharger la page.</p>
+                    <div class="log">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="javascript:location.reload();">Recharger</a>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    <div class="modal fade" tabindex="-1" role="dialog" id="GrantPrivilegeModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    Reserver
+                </div>
+                <div class="modal-body">
+                    <label for="inputPseudo" class="sr-only">Username</label>
+                    <input type="text" id="inputPseudo" class="form-control" placeholder="Pseudo" required autofocus>
+
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <select id="GrantSelect1" class="GrantSelect">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-4">
+                            <select id="GrantSelect2" class="GrantSelect">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-4">
+                            <select id="GrantSelect3" class="GrantSelect">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="GrantPrivilegeModalSubmit" class="btn btn-lg btn-primary btn-block">Reserver</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="CheckPrivilegeModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    Entrez le code de privilege
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <select id="CheckSelect1" class="CheckSelect">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-4">
+                            <select id="CheckSelect2" class="CheckSelect">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-4">
+                            <select id="CheckSelect3" class="CheckSelect">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4" selected>4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="CheckPrivilegeModalSubmit" class="btn btn-lg btn-primary btn-block">Déverouiller</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+
+    <script src="js/jquery-1.11.3.min.js"></script>
+    <script src="js/woopsa-client.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-toggle.min.js"></script>
+    <script src="js/moment.js"></script>
+    <script src="js/moment-fr-ch.js"></script>
+    <script src="js/Chart.min.js"></script>
+    <script src="js/hammer.min.js"></script>
+    <script src="js/drum.min.js"></script>
+    <script src="back.js"></script>
+</body>
+</html>

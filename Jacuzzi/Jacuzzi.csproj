@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7DB64F58-2C08-4A64-9E29-BDE35C93066E}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Jacuzzi</RootNamespace>
+    <AssemblyName>Jacuzzi</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Woopsa">
+      <HintPath>libs\Woopsa.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DownTimer.cs" />
+    <Compile Include="Jacuzzi.cs" />
+    <Compile Include="ModbusClient.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <EmbeddedResource Include="HTML\fonts\glyphicons-halflings-regular.eot" />
+    <EmbeddedResource Include="HTML\fonts\glyphicons-halflings-regular.ttf" />
+    <EmbeddedResource Include="HTML\fonts\glyphicons-halflings-regular.woff" />
+    <EmbeddedResource Include="HTML\fonts\glyphicons-halflings-regular.woff2" />
+    <EmbeddedResource Include="HTML\js\bootstrap-toggle.min.js.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="HTML\asset\blocked.png" />
+    <EmbeddedResource Include="HTML\asset\doorknob.png" />
+    <EmbeddedResource Include="HTML\asset\jacuzzi.png" />
+    <EmbeddedResource Include="HTML\asset\light-bulb-on.png" />
+    <EmbeddedResource Include="HTML\asset\phone-with-hand.png" />
+    <EmbeddedResource Include="HTML\asset\police-card.png" />
+    <EmbeddedResource Include="HTML\asset\pump.png" />
+    <EmbeddedResource Include="HTML\asset\sea.png" />
+    <EmbeddedResource Include="HTML\asset\switch.png" />
+    <EmbeddedResource Include="HTML\asset\thermometer.png" />
+    <EmbeddedResource Include="HTML\asset\unlocked.png" />
+    <EmbeddedResource Include="HTML\asset\warm-water.png" />
+    <EmbeddedResource Include="HTML\asset\wind.png" />
+    <EmbeddedResource Include="HTML\back.js" />
+    <EmbeddedResource Include="HTML\css\bootstrap-toggle.css" />
+    <EmbeddedResource Include="HTML\css\bootstrap-toggle.min.css" />
+    <EmbeddedResource Include="HTML\css\bootstrap.min.css" />
+    <EmbeddedResource Include="HTML\css\drum.css" />
+    <EmbeddedResource Include="HTML\css\drum.min.css" />
+    <EmbeddedResource Include="HTML\fonts\glyphicons-halflings-regular.svg" />
+    <EmbeddedResource Include="HTML\index.html" />
+    <EmbeddedResource Include="HTML\js\bootstrap-toggle.js" />
+    <EmbeddedResource Include="HTML\js\bootstrap-toggle.min.js" />
+    <EmbeddedResource Include="HTML\js\bootstrap.js" />
+    <EmbeddedResource Include="HTML\js\bootstrap.min.js" />
+    <EmbeddedResource Include="HTML\js\Chart.bundle.js" />
+    <EmbeddedResource Include="HTML\js\Chart.bundle.min.js" />
+    <EmbeddedResource Include="HTML\js\Chart.js" />
+    <EmbeddedResource Include="HTML\js\Chart.min.js" />
+    <EmbeddedResource Include="HTML\js\config.js" />
+    <EmbeddedResource Include="HTML\js\drum.js" />
+    <EmbeddedResource Include="HTML\js\drum.min.js" />
+    <EmbeddedResource Include="HTML\js\hammer.fakemultitouch.js" />
+    <EmbeddedResource Include="HTML\js\hammer.min.js" />
+    <EmbeddedResource Include="HTML\js\jquery-1.11.3.min.js" />
+    <EmbeddedResource Include="HTML\js\moment-fr-ch.js" />
+    <EmbeddedResource Include="HTML\js\moment.js" />
+    <EmbeddedResource Include="HTML\js\npm.js" />
+    <EmbeddedResource Include="HTML\js\woopsa-client.js" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
