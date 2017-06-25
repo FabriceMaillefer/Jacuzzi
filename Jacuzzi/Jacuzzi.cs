@@ -9,7 +9,6 @@ using Woopsa;
 namespace Jacuzzi
 {
     [WoopsaVisibility(WoopsaVisibility.DefaultIsVisible)]
-    //[WoopsaVisibility(WoopsaVisibility.DefaultIsVisible)]
     public class MesureTemperature
     {
         public MesureTemperature(DateTime Time, double value)
@@ -26,60 +25,138 @@ namespace Jacuzzi
     //[WoopsaVisibility(WoopsaVisibility.All)]
     public class Jacuzzi
     {
-        public const int HistoriqueCountMax = 100;
+        public int HistoriqueCountMax { get; set; }
         public Jacuzzi(string host)
         {
             Client = new ModbusClientTcp();
             Host = host;
 
             TempsActivation = 5;
-            TempsCycle = 15;
+            TempsDesactivation = 10;
+
+            _pompeTimer = new DownTimer(TimeSpan.FromMinutes(TempsActivation));
 
             PompeMode = true;
-            PompeManuel = true;
+            PompeManuel = false;
 
             Projecteur = false;
             LumiereSol = false;
 
+            HistoriqueCountMax = 100;
+            IntervalSecondsMesureTemperature = 30;
+            _measureTimer = new DownTimer(TimeSpan.FromSeconds(IntervalSecondsMesureTemperature));
 
             HistoriqueTemperatureEau = new List<MesureTemperature>(HistoriqueCountMax);
             HistoriqueTemperatureAir = new List<MesureTemperature>(HistoriqueCountMax);
 
         }
 
+
+        #region Process
+        public void CyclicUpdate()
+        {
+            ManualInputCheck();
+
+            UpdatePompe();
+
+            // Historique des mesures
+            UpdateHistoriqueTemperature();
+        }
+
+        public void UpdatePompe()
+        {
+            // Gestion timer pompe
+            if (PompeMode) // Mode auto
+            {
+                bool pompeManuel = PompeManuel;
+
+                if (_pompeTimer.Elapsed)
+                {
+                    pompeManuel = !pompeManuel;
+
+                    PompeManuel = pompeManuel;
+
+                    if (pompeManuel)
+                        _pompeTimer.SetTimeout(TimeSpan.FromMinutes(TempsActivation));
+                    else
+                        _pompeTimer.SetTimeout(TimeSpan.FromMinutes(TempsDesactivation));
+
+                    _pompeTimer.Restart();
+                }
+            }
+            else
+            {
+                _pompeTimer.SetTimeout(TimeSpan.FromMinutes(TempsActivation));
+            }
+        }
+
+        public void UpdateHistoriqueTemperature()
+        {
+            if (_measureTimer.Elapsed)
+            {
+                _measureTimer.SetTimeout(TimeSpan.FromSeconds(IntervalSecondsMesureTemperature));
+                _measureTimer.Restart();
+
+                HistoriqueTemperatureAir.Add(new MesureTemperature(DateTime.Now, TemperatureAir));
+                HistoriqueTemperatureEau.Add(new MesureTemperature(DateTime.Now, TemperatureEau));
+
+                while (HistoriqueTemperatureAir.Count >= HistoriqueCountMax)
+                {
+                    HistoriqueTemperatureAir.RemoveAt(0);
+                }
+
+                while (HistoriqueTemperatureEau.Count >= HistoriqueCountMax)
+                {
+                    HistoriqueTemperatureEau.RemoveAt(0);
+                }
+            }
+        }
+        #endregion
+
         #region Session Control
 
-        public void ControlLightMain(int privilegeCode, bool state)
+        public void Extinction(int privilegeCode)
         {
             CheckControlAccess(privilegeCode);
 
-            Projecteur = state;
+            PompeMode = true;
+            Projecteur = false;
+            LumiereSol = false;
+
+            DateTimeout = DateTime.Now;
+        }
+
+        public void ToggleLightMain(int privilegeCode)
+        {
+            CheckControlAccess(privilegeCode);
+
+            Projecteur = !Projecteur;
 
             UpdateTimeout();
         }
 
-        public void ControlLightFloor(int privilegeCode, bool state)
+        public void ToggleLightFloor(int privilegeCode)
         {
             CheckControlAccess(privilegeCode);
 
-            LumiereSol = state;
+            LumiereSol = !LumiereSol;
 
             UpdateTimeout();
         }
 
-        public void ControlPumpMode(int privilegeCode, bool state)
+        public void TogglePumpMode(int privilegeCode)
         {
             CheckControlAccess(privilegeCode);
 
-            PompeMode = state;
+            PompeMode = !PompeMode;
 
             UpdateTimeout();
         }
-        public void ControlPumpManual(int privilegeCode, bool state)
+        public void TogglePumpManual(int privilegeCode)
         {
             CheckControlAccess(privilegeCode);
 
-            PompeManuel = state;
+            PompeManuel = !PompeManuel;
 
             UpdateTimeout();
         }
@@ -137,11 +214,41 @@ namespace Jacuzzi
         private int? _currentPrivilegeCode;
         #endregion
 
+
         #region Manual physical Inputs
         public bool ButtonLed => Client.ReadSingleCoil(0);
         public bool ButtonProjo => Client.ReadSingleCoil(1);
         public bool ButtonPompe => Client.ReadSingleCoil(2);
         public bool ButtonChauffage => Client.ReadSingleCoil(3);
+
+        public void ManualInputCheck()
+        {
+            // Gestion bouton poussoir
+            bool buttonLed = ButtonLed;
+            if (buttonLed && !_lastButonLed) // Detection de trigger
+                LumiereSol = !LumiereSol;
+            _lastButonLed = buttonLed;
+
+            bool buttonProjo = ButtonProjo;
+            if (buttonProjo && !_lastButonProjo) // Detection de trigger
+                Projecteur = !Projecteur;
+            _lastButonProjo = buttonProjo;
+
+            bool buttonPompe = ButtonPompe;
+            if (buttonPompe && !_lastButonPompe) // Detection de trigger
+                PompeManuel = !PompeManuel;
+            _lastButonPompe = buttonPompe;
+
+            bool buttonChauffage = ButtonChauffage;
+            if (buttonChauffage && !_lastButonChauffage) // Detection de trigger
+                Chauffage = !Chauffage;
+            _lastButonChauffage = buttonChauffage;
+        }
+
+        private bool _lastButonLed;
+        private bool _lastButonProjo;
+        private bool _lastButonPompe;
+        private bool _lastButonChauffage;
         #endregion
 
         #region Properties
@@ -154,7 +261,7 @@ namespace Jacuzzi
             {
                 return Client.ReadSingleCoil(0x200 + 4);
             }
-            set
+            private set
             {
                 Client.WriteSingleCoil(0 + 4, value);
             }
@@ -164,41 +271,42 @@ namespace Jacuzzi
             {
                 return Client.ReadSingleCoil(0x200+5);
             }
-            set
+            private set
             {
                 Client.WriteSingleCoil(0+5, value);
             }
         }
+       // public bool PompeManuel { get; private set; }
         public bool PompeManuel {
             get
             {
                 return Client.ReadSingleCoil(0x200+1);
             }
-            set
+            private set
             {
                 Client.WriteSingleCoil(0+1, value);
             }
         }
-
         public bool Chauffage {
             get
             {
                 return Client.ReadSingleCoil(0x200);
             }
-            set
+            private set
             {
                 Client.WriteSingleCoil(0, value);
             }
         }
-
         public bool PompeMode { get; private set; }        
 
         public uint TempsActivation { get; set; }
-        public uint TempsCycle { get; set; }
+        public uint TempsDesactivation { get; set; }
 
         public List<MesureTemperature> HistoriqueTemperatureEau { get; set; }
         public List<MesureTemperature> HistoriqueTemperatureAir { get; set; }
+        public uint IntervalSecondsMesureTemperature { get; set; }
 
+        public string TempsRestantPompe => _pompeTimer.RemainingTime.ToString(@"mm\:ss");
 
         public string HistoriqueTemperatureEauSerialized
         {
@@ -218,6 +326,9 @@ namespace Jacuzzi
         #endregion
 
         public object locker = new object();
+        private DownTimer _pompeTimer;
+        private DownTimer _measureTimer;
+
 
         #region Modbus
         private ModbusClientTcp Client

@@ -7,14 +7,6 @@
 	//  | |\ | |  |  |  /\  |    | /__`  /\   |  | /  \ |\ | 
 	//  | | \| |  |  | /~~\ |___ | .__/ /~~\  |  | \__/ | \| 
 	//                                                       
-	
-		// Toggle button
-		$('#SwitchProjecteur').bootstrapToggle();
-		$('#SwitchLedSol').bootstrapToggle();
-		$('#SwitchPompeMode').bootstrapToggle();
-		$('#SwitchPompeManuel').bootstrapToggle();
-		
-		
 		// Chart
 		moment.locale('fr-ch');
 				
@@ -107,16 +99,31 @@
             return $('#CheckSelect1').val() + $('#CheckSelect2').val() + $('#CheckSelect3').val();
         }
 
-        function SetPrivilegeCode(code) { // TODO
+        function SetPrivilegeCode(code) {
             code = Number(code);
-            $("#CheckSelect1").drum('setIndex', code % 100);
-            code = code - (code % 100) * 100;
+            $("#CheckSelect3").drum('setIndex', code % 10);
+            code = (code - (code % 10)) / 10;
             $("#CheckSelect2").drum('setIndex', code % 10);
-            code = code - (code % 10) * 10;
-            $("#CheckSelect3").drum('setIndex', code);
+            code = (code - (code % 10)) / 10;
+            $("#CheckSelect1").drum('setIndex', code % 10); 
         }
 
         var HasPrivilege = false;
+
+        function ToggleButton(button, mode)
+        {
+            button.removeClass('btn-default');
+            if (mode)
+            {
+                button.removeClass('btn-danger');
+                button.addClass('btn-success');
+            }
+            else
+            {
+                button.addClass('btn-danger');
+                button.removeClass('btn-success');
+            }
+        }
 
         // Privilege
         function CheckPrivilege(canGrantPrivilegeAcess = false) {
@@ -146,9 +153,6 @@
 
         $("select.CheckSelect").drum({
             panelCount: 10,
-            /*onChange: function (e) {
-                CheckPrivilege();
-            }*/
         });
 
         // Storage
@@ -188,11 +192,11 @@
         $('#GrantPrivilegeModalSubmit').click(function () {
             console.log($('#inputPseudo').val());
             var privilegeCode = $('#GrantSelect1').val() + $('#GrantSelect2').val() + $('#GrantSelect3').val();
+            localStorage.CheckPin = privilegeCode;
             console.log(privilegeCode);
             woopsa.invoke("/GrantPrivilegeAccess", { 'pseudo': $('#inputPseudo').val(), 'privilegeCode': privilegeCode },
             function (value) {
                 console.log("GrantPrivilegeAccess");
-
                 $("#CheckSelect1").drum('setIndex', $('#GrantSelect1').val()); 
                 $("#CheckSelect2").drum('setIndex', $('#GrantSelect2').val()); 
                 $("#CheckSelect3").drum('setIndex', $('#GrantSelect3').val()); 
@@ -278,119 +282,72 @@
 			
 		var subscriptionLumiereSol = null;
 		woopsa.onChange("LumiereSol", function (value){
-			console.log("Received notification LumiereSol, new value = " + value);
-			if(value)
-			{
-				$('#SwitchLedSol').bootstrapToggle('on');
-			} else
-			{
-				$('#SwitchLedSol').bootstrapToggle('off');
-			}
+            ToggleButton($('#SwitchLedSol'), value);
 		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
 		function (subscription){
 			subscriptionLumiereSol = subscription;
 		});
-			
-        $('#SwitchLedSol').change(function () {
+
+        $('#SwitchLedSol').click(function () {
             if (HasPrivilege)
-                woopsa.invoke("ControlLightFloor", { privilegeCode : GetPrivilegeCode(), state: this.checked }, function (response){ });
-				
-			if(this.checked) {
-				console.log('LedSol Checked');
-			}
-			else{
-				console.log('LedSol Not Checked');
-			}
+            {
+                woopsa.invoke("ToggleLightFloor", { privilegeCode: GetPrivilegeCode() }, function (response) { });
+            }
 		});
 			
 		var subscriptionLumiereProjecteur = null;
 		woopsa.onChange("Projecteur", function (value){
-			console.log("Received notification Projecteur, new value = " + value);
-			if(value)
-			{
-				$('#SwitchProjecteur').bootstrapToggle('on');
-			} else
-			{
-				$('#SwitchProjecteur').bootstrapToggle('off');
-			}
+            ToggleButton($('#SwitchProjecteur'), value);
 		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
 		function (subscription){
 			subscriptionLumiereProjecteur = subscription;
 		});
         
-        $('#SwitchProjecteur').change(function () {
+        $('#SwitchProjecteur').click(function () {
             if (HasPrivilege)
-                woopsa.invoke("ControlLightMain", { privilegeCode : GetPrivilegeCode(), state: this.checked }, function (response){ });
-
-			if(this.checked) {
-				console.log('Projecteur Checked');
-			}
-			else{
-				console.log('Projecteur Not Checked');
-			}
+                woopsa.invoke("ToggleLightMain", { privilegeCode : GetPrivilegeCode() }, function (response){ });
+            
 		});
 				
 		// Pompe
 			
 		var subscriptionPompeMode = null;
-		woopsa.onChange("PompeMode", function (value){
-			console.log("Received notification PompeMode, new value = " + value);
-			if(value)
-			{
-				$('#SwitchPompeMode').bootstrapToggle('on');
-			} else
-			{
-				$('#SwitchPompeMode').bootstrapToggle('off');
-			}
+        woopsa.onChange("PompeMode", function (value) {
+            $('#SwitchPompeModeManuel').toggle(!value);
+            $('#SwitchPompeModeAuto').toggle(value);
+            ToggleButton($('#SwitchPompeMode'), value);
+            $('#SwitchPompeManuel').prop('disabled', value);
+            $('#SwitchPompeManuelModeAuto').toggle(value);
 		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
 		function (subscription){
 			subscriptionPompeMode = subscription;
 		});
 			
-		$('#SwitchPompeMode').change(function() {
+        $('#SwitchPompeMode').click(function() {
             if (HasPrivilege)
-                woopsa.invoke("ControlPumpMode", { privilegeCode : GetPrivilegeCode(), state: this.checked }, function (response){ });
-
-            $('#SwitchPompeManuelFieldset').prop('disabled', this.checked);
-
-			if(this.checked) {
-				console.log('PompeMode Checked');
-			}
-			else{
-                console.log('PompeMode Not Checked');
-			}
-		});
+                woopsa.invoke("TogglePumpMode", { privilegeCode: GetPrivilegeCode() }, function (response) { });
+        });
 			
 		var subscriptionPompeManuel = null;
-		woopsa.onChange("PompeManuel", function (value){
-			console.log("Received notification PompeManuel, new value = " + value);
-			if(value)
-			{
-				$('#SwitchPompeManuel').bootstrapToggle('on');
-			} else
-			{
-				$('#SwitchPompeManuel').bootstrapToggle('off');
-			}
+        woopsa.onChange("PompeManuel", function (value) {
+            ToggleButton($('#SwitchPompeManuel'), value);
 		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
 		function (subscription){
 			subscriptionPompeManuel = subscription;
         }); 
 
-		$('#SwitchPompeManuel').change(function() {
+        $('#SwitchPompeManuel').click(function() {
             if (HasPrivilege)
-                woopsa.invoke("ControlPumpManual", { privilegeCode : GetPrivilegeCode(), state: this.checked }, function (response){ });
-				
-			if(this.checked) {
-				console.log('PompeManuel Checked');
-			}
-			else{
-				console.log('PompeManuel Not Checked');
-			}
+                woopsa.invoke("TogglePumpManual", { privilegeCode : GetPrivilegeCode()}, function (response){ });
 		});
-			
+
+        $('#SwitchExtinction').click(function () {
+            if (HasPrivilege)
+                woopsa.invoke("Extinction", { privilegeCode: GetPrivilegeCode() }, function (response) { });
+        });
+
 		var subscriptionTempsActivation = null;
 		woopsa.onChange("TempsActivation", function (value){
-			console.log("Received notification TempsActivation, new value = " + value);
 			$('#InputPompeTempsActivation').val(value);
 		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
 		function (subscription){
@@ -410,28 +367,35 @@
 				console.log('TempsActivation change = ' + $( this ).val());
 			}
 		});
-			
-		var subscriptionTempsCycle = null;
+
+        var subscriptionPompeTempsRestant = null;
+        woopsa.onChange("TempsRestantPompe", function (value) {
+            $('#PompeTempsRestant').html(value);
+        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+            function (subscription) {
+                subscriptionPompeTempsRestant = subscription;
+            });
+
+        var subscriptionTempsDesactivation = null;
 		woopsa.onChange("TempsCycle", function (value){
-			console.log("Received notification TempsCycle, new value = " + value);
-			$('#InputPompeTempsCycle').val(value);
+            $('#InputPompeTempsDesactivation').val(value);
 		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
 		function (subscription){
-			subscriptionTempsCycle = subscription;
+            subscriptionTempsDesactivation = subscription;
 		});
 			
-		$('#InputPompeTempsCycle').change(function() {
+        $('#InputPompeTempsDesactivation').change(function() {
 			if($( this ).val() != ''){
-				woopsa.write("/TempsCycle", $( this ).val(), function (response){
+                woopsa.write("/TempsDesactivation", $( this ).val(), function (response){
 					if ( response == true ){
 					console.log("The value was written successfully!");
 					} else {
 					console.log("The value was not written successfully :(");
 					}
 				}); 
-				console.log('TempsCycle change = ' + $( this ).val());
+                console.log('TempsDesactivation change = ' + $( this ).val());
 			}
-		});
+        });
 	});
 })(jQuery);
 //temperaturesChart.data.datasets[1].data

@@ -63,18 +63,20 @@ namespace Jacuzzi
                 Jacuzzi root = new Jacuzzi(ManageHostArg(args));
                 using (WoopsaServer woopsaServer = new WoopsaServer(root, 10001))
                 {
-                    woopsaServer.AfterWoopsaModelAccess += (object sender, EventArgs e) => { Monitor.Exit(root.locker); };
                     woopsaServer.BeforeWoopsaModelAccess += (object sender, EventArgs e) => { Monitor.Enter(root.locker); };
+                    woopsaServer.AfterWoopsaModelAccess += (object sender, EventArgs e) => { Monitor.Exit(root.locker); };
                     
                     woopsaServer.WebServer.Routes.Add("web", HTTPMethod.GET, new RouteHandlerEmbeddedResources("HTML", Assembly.GetEntryAssembly()));
                     woopsaServer.WebServer.Routes.Add("web", HTTPMethod.GET, new RouteHandlerEmbeddedResources("HTML.index.html", Assembly.GetEntryAssembly()));
+
+                    Console.WriteLine("Woopsa server started. Client at http://localhost:10001/web/");
 
                     for (;;)
                     {
                         try
                         {
                             lock (root.locker)
-                                CyclicProcess(root);
+                                root.CyclicUpdate();
                         }
                         catch (Exception e)
                         {
@@ -92,81 +94,6 @@ namespace Jacuzzi
         }
         #endregion
 
-        #region Process
-        static void CyclicProcess(Jacuzzi root)
-        {
-            // Gestion bouton poussoir
-            bool buttonLed = root.ButtonLed;
-            if (buttonLed && !_lastButonLed) // Detection de trigger
-                root.LumiereSol = !root.LumiereSol;
-            _lastButonLed = buttonLed;
-
-            bool buttonProjo = root.ButtonProjo;
-            if (buttonProjo && !_lastButonProjo) // Detection de trigger
-                root.Projecteur = !root.Projecteur;
-            _lastButonProjo = buttonProjo;
-
-            bool buttonPompe = root.ButtonPompe;
-            if (buttonPompe && !_lastButonPompe) // Detection de trigger
-                root.PompeManuel = !root.PompeManuel;
-            _lastButonPompe = buttonPompe;
-
-            bool buttonChauffage = root.ButtonChauffage;
-            if (buttonChauffage && !_lastButonChauffage) // Detection de trigger
-                root.Chauffage = !root.Chauffage;
-            _lastButonChauffage = buttonChauffage;
-
-            // Gestion timer pompe
-            if (root.PompeMode) // Mode auto
-            {
-                bool pompeManuel = root.PompeManuel;
-
-                if (_pompeTimer.Elapsed)
-                {
-                    pompeManuel = !pompeManuel;
-
-                    root.PompeManuel = pompeManuel;
-                    
-                    if (pompeManuel)
-                        _pompeTimer.SetTimeout(TimeSpan.FromMinutes(root.TempsActivation));
-                    else
-                        _pompeTimer.SetTimeout(TimeSpan.FromMinutes(root.TempsCycle - root.TempsActivation));
-
-                    _pompeTimer.Restart();
-                }
-            }
-            else
-            {
-                _pompeTimer.SetTimeout(TimeSpan.FromMinutes(root.TempsActivation));
-            }
-
-            // Historique des mesures
-            if (_measureTimer.Elapsed)
-            {
-                _measureTimer.Restart();
-
-                root.HistoriqueTemperatureAir.Add(new MesureTemperature(DateTime.Now, root.TemperatureAir));
-                root.HistoriqueTemperatureEau.Add(new MesureTemperature(DateTime.Now, root.TemperatureEau));
-
-                if (root.HistoriqueTemperatureAir.Count >= Jacuzzi.HistoriqueCountMax)
-                {
-                    root.HistoriqueTemperatureAir.RemoveAt(0);
-                }
-
-                if (root.HistoriqueTemperatureEau.Count >= Jacuzzi.HistoriqueCountMax)
-                {
-                    root.HistoriqueTemperatureEau.RemoveAt(0);
-                }
-            }
-        }
-        static bool _lastButonLed;
-        static bool _lastButonProjo;
-        static bool _lastButonPompe;
-        static bool _lastButonChauffage;
-        static DownTimer _pompeTimer = new DownTimer();
-        static DownTimer _measureTimer = new DownTimer(TimeSpan.FromSeconds(30));
-
-        #endregion
 
         #region Error management
         static void ManageException(Exception e)
