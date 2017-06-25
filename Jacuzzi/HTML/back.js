@@ -57,8 +57,8 @@
 					yAxes: [{
 						type: 'linear',
                         ticks: {
-                            suggestedMin: 10,
-                            suggestedMax: 40,
+                            suggestedMin: 20,
+                            suggestedMax: 30,
 							callback: function(label, index, labels) {
 								return label + '°';
 							}
@@ -377,7 +377,7 @@
             });
 
         var subscriptionTempsDesactivation = null;
-		woopsa.onChange("TempsCycle", function (value){
+        woopsa.onChange("TempsDesactivation", function (value){
             $('#InputPompeTempsDesactivation').val(value);
 		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
 		function (subscription){
@@ -395,6 +395,48 @@
 				}); 
                 console.log('TempsDesactivation change = ' + $( this ).val());
 			}
+        });
+
+        var subscriptionInputHistoriqueLongueur = null;
+        woopsa.onChange("HistoriqueCountMax", function (value) {
+            $('#InputHistoriqueLongueur').val(value);
+        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+            function (subscription) {
+                subscriptionInputHistoriqueLongueur = subscription;
+            });
+
+        $('#InputHistoriqueLongueur').change(function () {
+            if ($(this).val() != '') {
+                woopsa.write("/HistoriqueCountMax", $(this).val(), function (response) {
+                    if (response == true) {
+                        console.log("The value was written successfully!");
+                    } else {
+                        console.log("The value was not written successfully :(");
+                    }
+                });
+                console.log('HistoriqueCountMax change = ' + $(this).val());
+            }
+        });
+
+        var subscriptionInputHistoriqueInterval = null;
+        woopsa.onChange("IntervalSecondsMesureTemperature", function (value) {
+            $('#InputHistoriqueInterval').val(value);
+        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+            function (subscription) {
+                subscriptionInputHistoriqueInterval = subscription;
+            });
+
+        $('#InputHistoriqueInterval').change(function () {
+            if ($(this).val() != '') {
+                woopsa.write("/IntervalSecondsMesureTemperature", $(this).val(), function (response) {
+                    if (response == true) {
+                        console.log("The value was written successfully!");
+                    } else {
+                        console.log("The value was not written successfully :(");
+                    }
+                });
+                console.log('IntervalSecondsMesureTemperature change = ' + $(this).val());
+            }
         });
 	});
 })(jQuery);

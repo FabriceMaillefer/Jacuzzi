@@ -25,7 +25,6 @@ namespace Jacuzzi
     //[WoopsaVisibility(WoopsaVisibility.All)]
     public class Jacuzzi
     {
-        public int HistoriqueCountMax { get; set; }
         public Jacuzzi(string host)
         {
             Client = new ModbusClientTcp();
@@ -68,10 +67,10 @@ namespace Jacuzzi
             // Gestion timer pompe
             if (PompeMode) // Mode auto
             {
-                bool pompeManuel = PompeManuel;
-
                 if (_pompeTimer.Elapsed)
                 {
+                    bool pompeManuel = PompeManuel;
+
                     pompeManuel = !pompeManuel;
 
                     PompeManuel = pompeManuel;
@@ -305,6 +304,7 @@ namespace Jacuzzi
         public List<MesureTemperature> HistoriqueTemperatureEau { get; set; }
         public List<MesureTemperature> HistoriqueTemperatureAir { get; set; }
         public uint IntervalSecondsMesureTemperature { get; set; }
+        public uint HistoriqueCountMax { get; set; }
 
         public string TempsRestantPompe => _pompeTimer.RemainingTime.ToString(@"mm\:ss");
 
