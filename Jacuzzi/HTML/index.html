@@ -152,12 +152,23 @@
                                     <div class="well well-sm">
                                         <button id="SwitchPompeMode" type="button" class="btn btn-block btn-lg">Mode<span id="SwitchPompeModeAuto"> Automatique</span><span id="SwitchPompeModeManuel"> Manuel</span></button>
                                         <button id="SwitchPompeManuel" type="button" class="btn btn-block btn-lg">Pompe<span id="SwitchPompeManuelModeAuto"> (Auto <span id="PompeTempsRestant"></span>)</span></button>
-                                        <a class="btn tn-block" href="#" data-toggle="modal" data-target="#PompeConfigModal"><span class="glyphicon glyphicon-cog"></span></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <img class="img-responsive" style="margin-top:10px;" src="asset/tap.png" />
+                                </div>
+                                <div class="col-xs-8">
+                                    <div class="well well-sm">
+                                        <button id="SwitchWaterMain" type="button" class="btn btn-block btn-lg">Principal</button>
+                                        <button id="SwitchWaterRefill" type="button" class="btn btn-block btn-lg">Remplissage</button>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <button id="SwitchExtinction" type="button" class="btn btn-lg btn-warning btn-block">Extinction</button>
+                                <button id="ButtonConfig" type="button" class="btn btn-lg btn-default btn-block" href="#" data-toggle="modal" data-target="#PompeConfigModal" >Config</button>
                             </div>
                         </fieldset>
                     </div>
@@ -171,9 +182,10 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Configuration de la pompe</h4>
+                    <h4 class="modal-title">Configuration</h4>
                 </div>
                 <div class="modal-body">
+                    <h2>Pompe</h2>
                     <div class="form-group">
                         <label for="InputPompeTempsActivation">Temps d'activation </label>
                         <div class="input-group">
@@ -188,15 +200,16 @@
                             <div class="input-group-addon"> minutes</div>
                         </div>
                     </div>
+                    <h2>Historique temperature</h2>
                     <div class="form-group">
-                        <label for="InputHistoriqueLongueur">Nombre d'échantillons de l'historique </label>
+                        <label for="InputHistoriqueLongueur">Nombre de mesures </label>
                         <div class="input-group">
                             <input id="InputHistoriqueLongueur" class="form-control" type="number" min="0" step="1" />
-                            <div class="input-group-addon"> échantillons</div>
+                            <div class="input-group-addon"> mesures</div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="InputHistoriqueInterval">Interval de l'historique </label>
+                        <label for="InputHistoriqueInterval">Interval des mesures</label>
                         <div class="input-group">
                             <input id="InputHistoriqueInterval" class="form-control" type="number" min="0" step="1" />
                             <div class="input-group-addon"> secondes</div>
@@ -344,8 +357,8 @@
 
 
     <script src="js/jquery-1.11.3.min.js"></script>
-    <script src="js/woopsa-client.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/woopsa-client.js"></script>
     <script src="js/moment.js"></script>
     <script src="js/moment-fr-ch.js"></script>
     <script src="js/Chart.min.js"></script>

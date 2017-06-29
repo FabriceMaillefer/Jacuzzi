@@ -1,9 +1,6 @@
 ﻿using Modbus;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Woopsa;
 
 namespace Jacuzzi
@@ -31,7 +28,7 @@ namespace Jacuzzi
             Host = host;
 
             TempsActivation = 5;
-            TempsDesactivation = 10;
+            TempsDesactivation = 15;
 
             _pompeTimer = new DownTimer(TimeSpan.FromMinutes(TempsActivation));
 
@@ -41,8 +38,11 @@ namespace Jacuzzi
             Projecteur = false;
             LumiereSol = false;
 
-            HistoriqueCountMax = 100;
-            IntervalSecondsMesureTemperature = 30;
+            WaterMain = false;
+            WaterRefill = false;
+
+            HistoriqueCountMax = 144;
+            IntervalSecondsMesureTemperature = 600;
             _measureTimer = new DownTimer(TimeSpan.FromSeconds(IntervalSecondsMesureTemperature));
 
             HistoriqueTemperatureEau = new List<MesureTemperature>(HistoriqueCountMax);
@@ -122,7 +122,28 @@ namespace Jacuzzi
             Projecteur = false;
             LumiereSol = false;
 
+            WaterMain = false;
+            WaterRefill = false;
+
             DateTimeout = DateTime.Now;
+        }
+
+        public void ToggleWaterMain(int privilegeCode)
+        {
+            CheckControlAccess(privilegeCode);
+
+            WaterMain = !WaterMain;
+
+            UpdateTimeout();
+        }
+
+        public void ToggleWaterRefill(int privilegeCode)
+        {
+            CheckControlAccess(privilegeCode);
+
+            WaterRefill = !WaterRefill;
+
+            UpdateTimeout();
         }
 
         public void ToggleLightMain(int privilegeCode)
@@ -220,6 +241,9 @@ namespace Jacuzzi
         public bool ButtonPompe => Client.ReadSingleCoil(2);
         public bool ButtonChauffage => Client.ReadSingleCoil(3);
 
+        public bool ButtonWaterMain => Client.ReadSingleCoil(4);
+        public bool ButtonWaterRefill => Client.ReadSingleCoil(5);
+
         public void ManualInputCheck()
         {
             // Gestion bouton poussoir
@@ -242,12 +266,24 @@ namespace Jacuzzi
             if (buttonChauffage && !_lastButonChauffage) // Detection de trigger
                 Chauffage = !Chauffage;
             _lastButonChauffage = buttonChauffage;
+
+            bool buttonWaterMain = ButtonWaterMain;
+            if (buttonChauffage && !_lastButtonWaterMain) // Detection de trigger
+                WaterMain = !WaterMain;
+            _lastButtonWaterMain = buttonWaterMain;
+
+            bool buttonWaterRefill = ButtonWaterRefill;
+            if (buttonWaterRefill && !_lastButtonWaterRefill) // Detection de trigger
+                WaterRefill = !WaterRefill;
+            _lastButtonWaterRefill = buttonWaterRefill;
         }
 
         private bool _lastButonLed;
         private bool _lastButonProjo;
         private bool _lastButonPompe;
         private bool _lastButonChauffage;
+        private bool _lastButtonWaterMain;
+        private bool _lastButtonWaterRefill;
         #endregion
 
         #region Properties
@@ -296,15 +332,39 @@ namespace Jacuzzi
                 Client.WriteSingleCoil(0, value);
             }
         }
-        public bool PompeMode { get; private set; }        
+        public bool PompeMode { get; private set; }
+
+        public bool WaterMain
+        {
+            get
+            {
+                return Client.ReadSingleCoil(0x200 + 2);
+            }
+            private set
+            {
+                Client.WriteSingleCoil(0 + 2, value);
+            }
+        }
+
+        public bool WaterRefill
+        {
+            get
+            {
+                return Client.ReadSingleCoil(0x200 + 3);
+            }
+            private set
+            {
+                Client.WriteSingleCoil(0 + 3, value);
+            }
+        }
 
         public uint TempsActivation { get; set; }
         public uint TempsDesactivation { get; set; }
 
         public List<MesureTemperature> HistoriqueTemperatureEau { get; set; }
         public List<MesureTemperature> HistoriqueTemperatureAir { get; set; }
-        public uint IntervalSecondsMesureTemperature { get; set; }
-        public uint HistoriqueCountMax { get; set; }
+        public int IntervalSecondsMesureTemperature { get; set; }
+        public int HistoriqueCountMax { get; set; }
 
         public string TempsRestantPompe => _pompeTimer.RemainingTime.ToString(@"mm\:ss");
 

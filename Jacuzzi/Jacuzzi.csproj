@@ -99,5 +99,8 @@
     <EmbeddedResource Include="HTML\js\npm.js" />
     <EmbeddedResource Include="HTML\js\woopsa-client.js" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="HTML\asset\tap.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

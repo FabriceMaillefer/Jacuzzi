@@ -40,9 +40,9 @@
 					{
 						type: "time",
 						time: {
-							unit: 'second',
+							unit: 'minute',
 							displayFormats: {
-								'second': 'H:mm', // 11:20
+								'minute': 'H:mm', // 11:20
                             },
                         },
 						scaleLabel: {
@@ -77,14 +77,16 @@
             panelCount: 10,
         });
 
-
+        $("select.CheckSelect").drum({
+            panelCount: 10,
+        });
 
 	//        __   __   __   __       
 	//  |  | /  \ /  \ |__) /__`  /\  
 	//  |/\| \__/ \__/ |    .__/ /~~\ 
 	//                                
 
-        woopsa = new WoopsaClient("http://localhost:10001/woopsa", jQuery);
+        woopsa = new WoopsaClient("http://titicloud:10001/woopsa", jQuery);
         woopsa.username = "anonyme";
         woopsa.password = "nopass";
 
@@ -151,9 +153,7 @@
             });
         }
 
-        $("select.CheckSelect").drum({
-            panelCount: 10,
-        });
+
 
         // Storage
 
@@ -182,7 +182,7 @@
 
             CheckPrivilege(value);
 
-        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
         function (subscription) {
             subscriptionCanGrantPrivilegeAcess = subscription;
         });
@@ -220,7 +220,7 @@
         woopsa.onChange("Pseudo", function (value) {
             console.log("Received notification Pseudo, new value = " + value);
             $('#PrivilegePseudo').html(value);
-        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
         function (subscription) {
             subscriptionPseudo = subscription;
         });
@@ -229,7 +229,7 @@
         woopsa.onChange("DateTimeout", function (value) {
             //console.log("Received notification Privilege Timeout, new value = " + value);
             $('#PrivilegeDateTimeout').html(new Date(value).toLocaleTimeString());
-        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
         function (subscription) {
             subscriptionTimeout = subscription;
         });
@@ -238,7 +238,7 @@
 		woopsa.onChange("TemperatureEau", function (value){
 			//console.log("Received notification TemperatureEau, new value = " + value);
             $('#TemperatureEau').html(value.toFixed(1) + '&nbsp;°C');
-        },/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
 			subscriptionTemperatureEau = subscription;
 		});
@@ -260,7 +260,7 @@
 		woopsa.onChange("TemperatureAir", function (value){
 			//console.log("Received notification TemperatureAir, new value = " + value);
             $('#TemperatureAir').html(value.toFixed(1) + '&nbsp;°C');
-		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+		},/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
 			subscriptionTemperatureAir = subscription;
 		});
@@ -283,7 +283,7 @@
 		var subscriptionLumiereSol = null;
 		woopsa.onChange("LumiereSol", function (value){
             ToggleButton($('#SwitchLedSol'), value);
-		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+		},/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
 			subscriptionLumiereSol = subscription;
 		});
@@ -298,7 +298,7 @@
 		var subscriptionLumiereProjecteur = null;
 		woopsa.onChange("Projecteur", function (value){
             ToggleButton($('#SwitchProjecteur'), value);
-		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+		},/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
 			subscriptionLumiereProjecteur = subscription;
 		});
@@ -318,7 +318,7 @@
             ToggleButton($('#SwitchPompeMode'), value);
             $('#SwitchPompeManuel').prop('disabled', value);
             $('#SwitchPompeManuelModeAuto').toggle(value);
-		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+		},/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
 			subscriptionPompeMode = subscription;
 		});
@@ -331,7 +331,7 @@
 		var subscriptionPompeManuel = null;
         woopsa.onChange("PompeManuel", function (value) {
             ToggleButton($('#SwitchPompeManuel'), value);
-		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+		},/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
 			subscriptionPompeManuel = subscription;
         }); 
@@ -341,6 +341,33 @@
                 woopsa.invoke("TogglePumpManual", { privilegeCode : GetPrivilegeCode()}, function (response){ });
 		});
 
+
+        var subscriptionWaterMain = null;
+        woopsa.onChange("WaterMain", function (value) {
+            ToggleButton($('#SwitchWaterMain'), value);
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
+        function (subscription) {
+            subscriptionWaterMain = subscription;
+        });
+
+        $('#SwitchWaterMain').click(function () {
+            if (HasPrivilege)
+                woopsa.invoke("ToggleWaterMain", { privilegeCode: GetPrivilegeCode() }, function (response) { });
+        });
+
+        var subscriptionWaterRefill = null;
+        woopsa.onChange("WaterRefill", function (value) {
+            ToggleButton($('#SwitchWaterRefill'), value);
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
+            function (subscription) {
+                subscriptionWaterRefill = subscription;
+            });
+
+        $('#SwitchWaterRefill').click(function () {
+            if (HasPrivilege)
+                woopsa.invoke("ToggleWaterRefill", { privilegeCode: GetPrivilegeCode() }, function (response) { });
+        });
+
         $('#SwitchExtinction').click(function () {
             if (HasPrivilege)
                 woopsa.invoke("Extinction", { privilegeCode: GetPrivilegeCode() }, function (response) { });
@@ -349,7 +376,7 @@
 		var subscriptionTempsActivation = null;
 		woopsa.onChange("TempsActivation", function (value){
 			$('#InputPompeTempsActivation').val(value);
-		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+		},/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
 			subscriptionTempsActivation = subscription;
 		});
@@ -371,7 +398,7 @@
         var subscriptionPompeTempsRestant = null;
         woopsa.onChange("TempsRestantPompe", function (value) {
             $('#PompeTempsRestant').html(value);
-        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
             function (subscription) {
                 subscriptionPompeTempsRestant = subscription;
             });
@@ -379,7 +406,7 @@
         var subscriptionTempsDesactivation = null;
         woopsa.onChange("TempsDesactivation", function (value){
             $('#InputPompeTempsDesactivation').val(value);
-		},/*monitorInterval*/0.08,/*publishInterval*/0.08, 
+		},/*monitorInterval*/0.2,/*publishInterval*/0.2, 
 		function (subscription){
             subscriptionTempsDesactivation = subscription;
 		});
@@ -400,7 +427,7 @@
         var subscriptionInputHistoriqueLongueur = null;
         woopsa.onChange("HistoriqueCountMax", function (value) {
             $('#InputHistoriqueLongueur').val(value);
-        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
             function (subscription) {
                 subscriptionInputHistoriqueLongueur = subscription;
             });
@@ -421,7 +448,7 @@
         var subscriptionInputHistoriqueInterval = null;
         woopsa.onChange("IntervalSecondsMesureTemperature", function (value) {
             $('#InputHistoriqueInterval').val(value);
-        },/*monitorInterval*/0.08,/*publishInterval*/0.08,
+        },/*monitorInterval*/0.2,/*publishInterval*/0.2,
             function (subscription) {
                 subscriptionInputHistoriqueInterval = subscription;
             });
