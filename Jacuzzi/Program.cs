@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using Woopsa;
 using System.Reflection;
+using System.Xml.Serialization;
+using System.Runtime.InteropServices;
 
 namespace Jacuzzi
 {
@@ -60,7 +62,8 @@ namespace Jacuzzi
 
             try
             {
-                Jacuzzi root = new Jacuzzi(ManageHostArg(args));
+                JacuzziParameters parameters = JacuzziParameters.DeSerializeOrCreate();
+                Jacuzzi root = new Jacuzzi(parameters, ManageHostArg(args));
                 using (WoopsaServer woopsaServer = new WoopsaServer(root, 10001))
                 {
                     woopsaServer.BeforeWoopsaModelAccess += (object sender, EventArgs e) => { Monitor.Enter(root.locker); };
@@ -85,6 +88,8 @@ namespace Jacuzzi
                         }
                         Thread.Sleep(refresh);
                     }
+
+                    
                 }
             }
             catch (Exception e)

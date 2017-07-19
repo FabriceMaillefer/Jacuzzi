@@ -1,6 +1,9 @@
 ﻿using Modbus;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Xml.Serialization;
 using Woopsa;
 
 namespace Jacuzzi
@@ -8,27 +11,69 @@ namespace Jacuzzi
     [WoopsaVisibility(WoopsaVisibility.DefaultIsVisible)]
     public class MesureTemperature
     {
-        public MesureTemperature(DateTime Time, double value)
-        {
-            x = Time.ToString("yyyy'-'MM'-'dd HH':'mm':'ss");
-            y = value;
-        }
-
         public string x { get; set; }
         public double y { get; set; }
+    }
+
+    public class JacuzziParameters
+    {
+        public uint TempsActivation { get; set; }
+        public uint TempsDesactivation { get; set; }
+        public int IntervalSecondsMesureTemperature { get; set; }
+        public int HistoriqueCountMax { get; set; }
+        public List<MesureTemperature> HistoriqueTemperatureEau { get; set; } = new List<MesureTemperature>();
+        public List<MesureTemperature> HistoriqueTemperatureAir { get; set; } = new List<MesureTemperature>();
+
+        public List<MesureTemperature> HistoriquePompe { get; set; } = new List<MesureTemperature>();
+
+        public static void Serialize(JacuzziParameters param)
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(JacuzziParameters));
+            using (StreamWriter writer = new StreamWriter("Jacuzzi.xml"))
+            {
+                serializer.Serialize(writer, param);
+            }
+        }
+
+        public static JacuzziParameters DeSerializeOrCreate()
+        {
+            try
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(JacuzziParameters));
+                using (StreamReader reader = new StreamReader("Jacuzzi.xml"))
+                {
+                    return serializer.Deserialize(reader) as JacuzziParameters;
+                }
+            }
+            catch
+            {
+                JacuzziParameters param = new JacuzziParameters();
+
+                param.HistoriqueCountMax = 144;
+                param.IntervalSecondsMesureTemperature = 600;
+                param.TempsActivation = 10;
+                param.TempsDesactivation = 20;
+
+                return param;
+            }
+        }
     }
 
     [WoopsaVisibility(WoopsaVisibility.DefaultIsVisible | WoopsaVisibility.IEnumerableObject)]
     //[WoopsaVisibility(WoopsaVisibility.All)]
     public class Jacuzzi
     {
-        public Jacuzzi(string host)
+        private const string DateTimeFormat = "yyyy'-'MM'-'dd HH':'mm':'ss";
+
+        public Jacuzzi(JacuzziParameters parameters, string host)
         {
+            _parameters = parameters;
+
             Client = new ModbusClientTcp();
             Host = host;
 
-            TempsActivation = 5;
-            TempsDesactivation = 15;
+            /*TempsActivation = 5;
+            TempsDesactivation = 15;*/
 
             _pompeTimer = new DownTimer(TimeSpan.FromMinutes(TempsActivation));
 
@@ -41,20 +86,35 @@ namespace Jacuzzi
             WaterMain = false;
             WaterRefill = false;
 
-            HistoriqueCountMax = 144;
-            IntervalSecondsMesureTemperature = 600;
-            _measureTimer = new DownTimer(TimeSpan.FromSeconds(IntervalSecondsMesureTemperature));
+            /*HistoriqueCountMax = 144;
+            IntervalSecondsMesureTemperature = 600;*/
 
-            HistoriqueTemperatureEau = new List<MesureTemperature>(HistoriqueCountMax);
-            HistoriqueTemperatureAir = new List<MesureTemperature>(HistoriqueCountMax);
+            _measureTimer = new DownTimer(TimeSpan.Zero);
 
+            /*HistoriqueTemperatureEau = new List<MesureTemperature>(HistoriqueCountMax);
+            HistoriqueTemperatureAir = new List<MesureTemperature>(HistoriqueCountMax);*/
+            CleanHistorique();
         }
 
+        public void CleanHistorique()
+        {
+            DateTime TimeToKeep = DateTime.Now - TimeSpan.FromHours(4);
+
+            HistoriqueTemperatureAir.RemoveAll(_ => DateTime.ParseExact(_.x, DateTimeFormat, System.Globalization.CultureInfo.InvariantCulture) < TimeToKeep);
+            HistoriqueTemperatureEau.RemoveAll(_ => DateTime.ParseExact(_.x, DateTimeFormat, System.Globalization.CultureInfo.InvariantCulture) < TimeToKeep);
+            HistoriquePompe.RemoveAll(_ => DateTime.ParseExact(_.x, DateTimeFormat, System.Globalization.CultureInfo.InvariantCulture) < TimeToKeep);
+        }
+
+        private JacuzziParameters _parameters;
 
         #region Process
         public void CyclicUpdate()
         {
             ManualInputCheck();
+
+            // Auto désactivation du remplissage
+            if (WaterLevel)
+                WaterRefill = false;
 
             UpdatePompe();
 
@@ -96,9 +156,12 @@ namespace Jacuzzi
                 _measureTimer.SetTimeout(TimeSpan.FromSeconds(IntervalSecondsMesureTemperature));
                 _measureTimer.Restart();
 
-                HistoriqueTemperatureAir.Add(new MesureTemperature(DateTime.Now, TemperatureAir));
-                HistoriqueTemperatureEau.Add(new MesureTemperature(DateTime.Now, TemperatureEau));
+                HistoriqueTemperatureAir.Add(new MesureTemperature() { x = DateTime.Now.ToString(DateTimeFormat), y = TemperatureAir });
+                HistoriqueTemperatureEau.Add(new MesureTemperature() { x = DateTime.Now.ToString(DateTimeFormat), y = TemperatureEau });
 
+                CleanHistorique();
+
+                /*
                 while (HistoriqueTemperatureAir.Count >= HistoriqueCountMax)
                 {
                     HistoriqueTemperatureAir.RemoveAt(0);
@@ -107,7 +170,9 @@ namespace Jacuzzi
                 while (HistoriqueTemperatureEau.Count >= HistoriqueCountMax)
                 {
                     HistoriqueTemperatureEau.RemoveAt(0);
-                }
+                }*/
+
+                JacuzziParameters.Serialize(_parameters);
             }
         }
         #endregion
@@ -170,8 +235,11 @@ namespace Jacuzzi
 
             PompeMode = !PompeMode;
 
+            _pompeTimer.Restart();
+
             UpdateTimeout();
         }
+
         public void TogglePumpManual(int privilegeCode)
         {
             CheckControlAccess(privilegeCode);
@@ -196,7 +264,6 @@ namespace Jacuzzi
         {
             DateTimeout = DateTime.Now + PrivilageAccessDuration;
         }
-
 
         public void GrantPrivilegeAccess(string pseudo, int privilegeCode)
         {
@@ -240,9 +307,8 @@ namespace Jacuzzi
         public bool ButtonProjo => Client.ReadSingleCoil(1);
         public bool ButtonPompe => Client.ReadSingleCoil(2);
         public bool ButtonChauffage => Client.ReadSingleCoil(3);
-
         public bool ButtonWaterMain => Client.ReadSingleCoil(4);
-        public bool ButtonWaterRefill => Client.ReadSingleCoil(5);
+        public bool ButtonWaterRefill => Client.ReadSingleCoil(6);
 
         public void ManualInputCheck()
         {
@@ -268,7 +334,7 @@ namespace Jacuzzi
             _lastButonChauffage = buttonChauffage;
 
             bool buttonWaterMain = ButtonWaterMain;
-            if (buttonChauffage && !_lastButtonWaterMain) // Detection de trigger
+            if (buttonWaterMain && !_lastButtonWaterMain) // Detection de trigger
                 WaterMain = !WaterMain;
             _lastButtonWaterMain = buttonWaterMain;
 
@@ -287,6 +353,7 @@ namespace Jacuzzi
         #endregion
 
         #region Properties
+
         public double TemperatureEau => Client.ReadHoldingRegisters(0, 1)[0] / 10.0;
         public double TemperatureAir => Client.ReadHoldingRegisters(1, 1)[0] / 10.0;
 
@@ -301,28 +368,39 @@ namespace Jacuzzi
                 Client.WriteSingleCoil(0 + 4, value);
             }
         }
-        public bool LumiereSol {
+        public bool LumiereSol
+        {
             get
             {
-                return Client.ReadSingleCoil(0x200+5);
+                return Client.ReadSingleCoil(0x200 + 5);
             }
             private set
             {
-                Client.WriteSingleCoil(0+5, value);
+                Client.WriteSingleCoil(0 + 5, value);
             }
         }
-       // public bool PompeManuel { get; private set; }
-        public bool PompeManuel {
+        // public bool PompeManuel { get; private set; }
+        public bool PompeManuel
+        {
             get
             {
-                return Client.ReadSingleCoil(0x200+1);
+                return Client.ReadSingleCoil(0x200 + 1);
             }
             private set
             {
-                Client.WriteSingleCoil(0+1, value);
+                HistoriquePompe.Add(new MesureTemperature()
+                {
+                    x = DateTime.Now.ToString(DateTimeFormat),
+                    y = value ? 1 : 0,
+                });
+
+                CleanHistorique();
+
+                Client.WriteSingleCoil(0 + 1, value);
             }
         }
-        public bool Chauffage {
+        public bool Chauffage
+        {
             get
             {
                 return Client.ReadSingleCoil(0x200);
@@ -333,7 +411,6 @@ namespace Jacuzzi
             }
         }
         public bool PompeMode { get; private set; }
-
         public bool WaterMain
         {
             get
@@ -342,10 +419,11 @@ namespace Jacuzzi
             }
             private set
             {
+                if (!value)
+                    WaterRefill = false;
                 Client.WriteSingleCoil(0 + 2, value);
             }
         }
-
         public bool WaterRefill
         {
             get
@@ -354,17 +432,23 @@ namespace Jacuzzi
             }
             private set
             {
+                if (value)
+                    WaterMain = true;
                 Client.WriteSingleCoil(0 + 3, value);
             }
         }
 
-        public uint TempsActivation { get; set; }
-        public uint TempsDesactivation { get; set; }
+        public bool WaterLevel => Client.ReadSingleCoil(8);
 
-        public List<MesureTemperature> HistoriqueTemperatureEau { get; set; }
-        public List<MesureTemperature> HistoriqueTemperatureAir { get; set; }
-        public int IntervalSecondsMesureTemperature { get; set; }
-        public int HistoriqueCountMax { get; set; }
+        public uint TempsActivation { get => _parameters.TempsActivation; set { _parameters.TempsActivation = value; } }
+        public uint TempsDesactivation { get => _parameters.TempsDesactivation; set { _parameters.TempsDesactivation = value; } }
+
+        public List<MesureTemperature> HistoriqueTemperatureEau => _parameters.HistoriqueTemperatureEau;
+        public List<MesureTemperature> HistoriqueTemperatureAir => _parameters.HistoriqueTemperatureAir;
+        public List<MesureTemperature> HistoriquePompe => _parameters.HistoriquePompe;
+
+        public int IntervalSecondsMesureTemperature { get => _parameters.IntervalSecondsMesureTemperature; set { _parameters.IntervalSecondsMesureTemperature = value; } }
+        public int HistoriqueCountMax { get => _parameters.HistoriqueCountMax; set { _parameters.HistoriqueCountMax = value; } }
 
         public string TempsRestantPompe => _pompeTimer.RemainingTime.ToString(@"mm\:ss");
 
@@ -383,6 +467,14 @@ namespace Jacuzzi
                 return WoopsaJsonData.CreateFromDeserializedData(HistoriqueTemperatureAir).Serialize();
             }
         }
+
+        public string HistoriquePompeSerialized
+        {
+            get
+            {
+                return WoopsaJsonData.CreateFromDeserializedData(HistoriquePompe).Serialize();
+            }
+        }
         #endregion
 
         public object locker = new object();
@@ -396,7 +488,7 @@ namespace Jacuzzi
             get
             {
                 if (!_client.IsConnected)
-                    _client.Connect(Host, 502, 1000);
+                    _client.Connect(Host, 502, 5000);
                 return _client;
             }
             set
@@ -406,7 +498,7 @@ namespace Jacuzzi
         }
         public string Host { get; protected set; }
 
-        private ModbusClientTcp _client; 
+        private ModbusClientTcp _client;
         #endregion
     }
 }

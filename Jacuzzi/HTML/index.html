@@ -135,6 +135,18 @@
                         <fieldset id="ControlPanelFieldset">
                             <div class="row">
                                 <div class="col-xs-4">
+                                    <img class="img-responsive" style="margin-top:10px;" src="asset/tap.png" />
+                                </div>
+                                <div class="col-xs-8">
+                                    <div class="well well-sm">
+                                        <button id="SwitchWaterMain" type="button" class="btn btn-block btn-lg">Principal</button>
+                                        <button id="SwitchWaterRefill" type="button" class="btn btn-block btn-lg">Remplissage</button>
+                                        <div id="WaterLevel" class="btn btn-block btn-lg">Niveau d'eau</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-xs-4">
                                     <img class="img-responsive" style="margin-top:10px;" src="asset/light-bulb-on.png" />
                                 </div>
                                 <div class="col-xs-8">
@@ -151,24 +163,14 @@
                                 <div class="col-xs-8">
                                     <div class="well well-sm">
                                         <button id="SwitchPompeMode" type="button" class="btn btn-block btn-lg">Mode<span id="SwitchPompeModeAuto"> Automatique</span><span id="SwitchPompeModeManuel"> Manuel</span></button>
-                                        <button id="SwitchPompeManuel" type="button" class="btn btn-block btn-lg">Pompe<span id="SwitchPompeManuelModeAuto"> (Auto <span id="PompeTempsRestant"></span>)</span></button>
+                                        <button id="SwitchPompeManuel" type="button" class="btn btn-block btn-lg">Pompe<span id="SwitchPompeManuelModeAuto" style="font-size:small;"> (<span id="PompeTempsRestant"></span>)</span></button>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-xs-4">
-                                    <img class="img-responsive" style="margin-top:10px;" src="asset/tap.png" />
-                                </div>
-                                <div class="col-xs-8">
-                                    <div class="well well-sm">
-                                        <button id="SwitchWaterMain" type="button" class="btn btn-block btn-lg">Principal</button>
-                                        <button id="SwitchWaterRefill" type="button" class="btn btn-block btn-lg">Remplissage</button>
-                                    </div>
-                                </div>
-                            </div>
+
                             <div class="row">
                                 <button id="SwitchExtinction" type="button" class="btn btn-lg btn-warning btn-block">Extinction</button>
-                                <button id="ButtonConfig" type="button" class="btn btn-lg btn-default btn-block" href="#" data-toggle="modal" data-target="#PompeConfigModal" >Config</button>
+                                <button id="ButtonConfig" type="button" class="btn btn-lg btn-default btn-block" href="#" data-toggle="modal" data-target="#PompeConfigModal">Config</button>
                             </div>
                         </fieldset>
                     </div>
@@ -189,14 +191,14 @@
                     <div class="form-group">
                         <label for="InputPompeTempsActivation">Temps d'activation </label>
                         <div class="input-group">
-                            <input id="InputPompeTempsActivation" class="form-control" type="number" min="0" step="1"/>
+                            <input id="InputPompeTempsActivation" class="form-control" type="number" min="0" step="1" />
                             <div class="input-group-addon"> minutes</div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="InputPompeTempsDesactivation">Temps de désactivation </label>
                         <div class="input-group">
-                            <input id="InputPompeTempsDesactivation" class="form-control" type="number" min="0" step="1"/>
+                            <input id="InputPompeTempsDesactivation" class="form-control" type="number" min="0" step="1" />
                             <div class="input-group-addon"> minutes</div>
                         </div>
                     </div>
